@@ -20,6 +20,8 @@ def main():
     elif 'complete' in output:
       print('SUCCESS: Kaggle Integration Tests')
       break
+    elif 'cancel' in output:
+      raise Exception(f'FAIL: Test(s) failed. The kaggle kenerl has been canceled')
     else:
       time.sleep(SLEEP_TIME)
 

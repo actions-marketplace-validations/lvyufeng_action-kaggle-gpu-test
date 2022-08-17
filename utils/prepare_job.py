@@ -4,6 +4,10 @@ import json
 GIT_USERNAME, GIT_REPO_NAME = os.environ.get('REPO_NAME').split('/')
 GIT_ACCESS_TOKEN = os.environ.get('GIT_ACCESS_TOKEN')
 TEST_FOLDER = os.environ.get('TEST_FOLDER')
+REQUIREMENTS = os.environ.get('REQUIREMENTS')
+ENV_NAME = os.environ.get('ENV_NAME')
+PYTHON_VERSION = os.environ.get('PYTHON_VERSION')
+CUDA_VERSION = os.environ.get('CUDA_VERSION')
 
 JOB_FILE_NAME = 'job.py'
 
@@ -11,13 +15,13 @@ JOB_FILE_NAME = 'job.py'
 JOB_LINES = [
   'import os',
   'import subprocess',
-  #f'!git clone https://{GIT_ACCESS_TOKEN}@github.com/{GIT_USERNAME}/{GIT_REPO_NAME}',
-  #'!pip install .',
-  #f'!pytest {GIT_REPO_NAME}/{TEST_FOLDER}'
   f'os.system("git clone https://{GIT_ACCESS_TOKEN}@github.com/{GIT_USERNAME}/{GIT_REPO_NAME}")',
   f'os.chdir("{GIT_REPO_NAME}")',
-  'os.system("pip install .")',
-  f'return_code = os.system("pytest {TEST_FOLDER}")',
+  f'os.system("conda create -n {ENV_NAME} python={PYTHON_VERSION} cudatoolkit={CUDA_VERSION} cudnn -y")',
+  f'os.system("/opt/conda/envs/{ENV_NAME}/bin/pip install -r {REQUIREMENTS}")',
+  # f'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/conda/envs/{ENV_NAME}/lib")',
+  # f'export PATH=$PATH:/opt/conda/envs/{ENV_NAME}/bin")',
+  f'return_code = os.system("/opt/conda/envs/{ENV_NAME}/bin/pytest {TEST_FOLDER}")',
   'if return_code: raise Exception("tests failed.")'
 ]
 

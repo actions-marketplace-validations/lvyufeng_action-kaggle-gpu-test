@@ -1,5 +1,5 @@
-name: "Kaggle GPU Test"
-author: "namiyousef"
+name: "Free GPU Test"
+author: "lvyufeng"
 description: "Automatically test integration/gpu tests against Kaggle notebook with GPU runtime"
 inputs:
   git_access_token:
@@ -8,6 +8,9 @@ inputs:
   kaggle_api_key:
     description: "Kaggle API key for pushing tests"
     required: true
+  kaggle_username:
+    description: "Kaggle user name for pushing tests"
+    required: true
   repository_name:
     description: "Repository owner and name, owner/name"
     required: true
@@ -15,11 +18,29 @@ inputs:
      description: "Folder to run pytest on"
      required: true
      default: "integration/"
+  python_requirements:
+     description: "requirement file"
+     required: true
+     default: "requirements.txt"
+  env_name:
+     description: "new conda environment name"
+     required: true
+     default: "mindspore"
+  python_version:
+     description: "python version"
+     required: true
+     default: "3.7.5"
+  cuda_version:
+     description: "cuda version"
+     required: true
+     default: "11.1"
 outputs:
   automatic_releases_tag:
     description: "The release tag this action just processed"
+    value: ""
   upload_url:
     description: "The URL for uploading additional assets to the release"
+    value: ""
 runs:
   using: "composite"
   
@@ -28,11 +49,16 @@ runs:
     shell: bash
     env:
       KAGGLE_API_KEY: ${{ inputs.kaggle_api_key }}
+      KAGGLE_USERNAME: ${{ inputs.kaggle_username }}
+
     run: |
       cd ~
       mkdir .kaggle
       python -m pip install --upgrade kaggle --user
-      python -c "import json, os; kaggle_api_key = os.environ.get('KAGGLE_API_KEY'); kaggle_json = json.loads(kaggle_api_key);\
+      python -c "import json, os; \
+      kaggle_api_key = os.environ.get('KAGGLE_API_KEY'); \
+      kaggle_username = os.environ.get('KAGGLE_USERNAME'); \
+      kaggle_json = {'username': kaggle_username, 'key': kaggle_api_key};\
       
       with open('.kaggle/kaggle.json', 'w') as f:
         json.dump(kaggle_json, f)
@@ -46,6 +72,10 @@ runs:
       REPO_NAME: ${{ inputs.repository_name }}
       GIT_ACCESS_TOKEN: ${{ inputs.git_access_token }}
       TEST_FOLDER: ${{ inputs.test_folder }}
+      REQUIREMENTS: ${{ inputs.python_requirements }}
+      ENV_NAME: ${{ inputs.env_name }}
+      PYTHON_VERSION: ${{ inputs.python_version }}
+      CUDA_VERSION: ${{ inputs.cuda_version }}
     run: |
       kaggle kernels init -p ${{ github.action_path }}
       cd ${{ github.action_path }}
