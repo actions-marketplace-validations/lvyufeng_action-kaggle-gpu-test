@@ -5,6 +5,8 @@ from parser import parse_kaggle_output
 
 SLEEP_TIME = 5
 GIT_REPO_NAME = os.environ.get('REPO_NAME').split('/')[-1]
+kernel_name = filter(str.isalnum, GIT_REPO_NAME)
+kernel_name = ''.join(kernel_name)
 
 def main():
   while True:

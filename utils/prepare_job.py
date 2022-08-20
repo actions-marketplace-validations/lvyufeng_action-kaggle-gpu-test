@@ -11,6 +11,9 @@ CUDA_VERSION = os.environ.get('CUDA_VERSION')
 
 JOB_FILE_NAME = 'job.py'
 
+kernel_name = filter(str.isalnum, GIT_REPO_NAME)
+kernel_name = ''.join(kernel_name)
+
 # need to think of a better way of doing this... you are showing the key within Kaggle this way. Maybe better to push a dataset of the tests?
 JOB_LINES = [
   'import os',
@@ -30,8 +33,8 @@ def prepare_metadata_file():
   with open('kernel-metadata.json', 'r') as f:
     metadata_file = json.load(f)
     
-  metadata_file['id'] = '/'.join([metadata_file['id'].split('/')[0], GIT_REPO_NAME])
-  metadata_file['title'] = GIT_REPO_NAME
+  metadata_file['id'] = '/'.join([metadata_file['id'].split('/')[0], kernel_name])
+  metadata_file['title'] = kernel_name
   metadata_file['code_file'] = JOB_FILE_NAME
   metadata_file['language'] = 'python'
   metadata_file['kernel_type'] = 'script'
