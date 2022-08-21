@@ -2,38 +2,19 @@ name: "Free GPU Test"
 author: "lvyufeng"
 description: "Automatically test integration/gpu tests against Kaggle notebook with GPU runtime"
 inputs:
-  git_access_token:
-    description: "GitHub secret token with read permissions"
-    required: true
-  kaggle_api_key:
-    description: "Kaggle API key for pushing tests"
-    required: true
   kaggle_username:
     description: "Kaggle user name for pushing tests"
     required: true
-  repository_name:
-    description: "Repository owner and name, owner/name"
+  kaggle_key:
+    description: "Kaggle API key for pushing tests"
     required: true
-  test_folder:
-     description: "Folder to run pytest on"
-     required: true
-     default: "integration/"
-  python_requirements:
-     description: "requirement file"
-     required: true
-     default: "requirements.txt"
-  env_name:
-     description: "new conda environment name"
-     required: true
-     default: "mindspore"
-  python_version:
-     description: "python version"
-     required: true
-     default: "3.7.5"
-  cuda_version:
-     description: "cuda version"
-     required: true
-     default: "11.1"
+  kernel_name:
+    description: "Name of Kaggle kernel"
+    required: true
+  kernel_job_file:
+    description: "Task file of Kaggle kernel"
+    required: true
+
 outputs:
   automatic_releases_tag:
     description: "The release tag this action just processed"
@@ -45,60 +26,37 @@ runs:
   using: "composite"
   
   steps:
-  - name: authenticate-kaggle-cli
+  - name: install-kaggle-cli
     shell: bash
     env:
-      KAGGLE_API_KEY: ${{ inputs.kaggle_api_key }}
+      KAGGLE_KEY: ${{ inputs.kaggle_key }}
       KAGGLE_USERNAME: ${{ inputs.kaggle_username }}
-
     run: |
       cd ~
       mkdir .kaggle
       python -m pip install --upgrade kaggle --user
-      python -c "import json, os; \
-      kaggle_api_key = os.environ.get('KAGGLE_API_KEY'); \
-      kaggle_username = os.environ.get('KAGGLE_USERNAME'); \
-      kaggle_json = {'username': kaggle_username, 'key': kaggle_api_key};\
-      
-      with open('.kaggle/kaggle.json', 'w') as f:
-        json.dump(kaggle_json, f)
-      "
+      python ${{ github.action_path }}/utils/dump_kaggle_json.py
       chmod 600 /home/runner/.kaggle/kaggle.json
 
-    # todo here needs to create the json and store it in .kaggle/
   - name: send tests
     shell: bash
     env:
-      REPO_NAME: ${{ inputs.repository_name }}
-      GIT_ACCESS_TOKEN: ${{ inputs.git_access_token }}
-      TEST_FOLDER: ${{ inputs.test_folder }}
-      REQUIREMENTS: ${{ inputs.python_requirements }}
-      ENV_NAME: ${{ inputs.env_name }}
-      PYTHON_VERSION: ${{ inputs.python_version }}
-      CUDA_VERSION: ${{ inputs.cuda_version }}
+      KERNEL_NAME: ${{ inputs.kernel_name }}
+      KERNEL_JOB_FILE: ${{ github.workspace }}/${{ inputs.kernel_job_file }}
     run: |
       kaggle kernels init -p ${{ github.action_path }}
       cd ${{ github.action_path }}
       python utils/prepare_job.py
       kaggle kernels push
-      
+
   - name: check job status
     shell: bash
     env:
-      REPO_NAME: ${{ inputs.repository_name }}
+      KERNEL_NAME: ${{ inputs.kernel_name }}
     run: |
       cd ${{ github.action_path }}
-      python utils/worker.py
+      python utils/check_status.py
       
-    #ls
-      
-    # authenticate kaggle cli
-  #send-job:
-    # use kaggle cli to send the tests
-    # sends a job to Kaggle. I.e. this should create the files, send them
-  
-  #check-status:
-    # needs to be a while loop, keeps checking until status is either success or error. Depending on this should output error
 branding:
   icon: activity
   color: green
